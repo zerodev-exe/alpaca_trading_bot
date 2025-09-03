@@ -1,0 +1,3 @@
+import get_top_gainers
+
+get_top_gainers.get_top_crypto_gainers()

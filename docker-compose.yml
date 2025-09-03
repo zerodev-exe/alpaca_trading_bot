@@ -1,0 +1,13 @@
+version: "3.4"
+
+services:
+  trading-bot:
+    build: .
+    container_name: alpaca-trading-bot
+    volumes:
+      - ./.env:/app/.env
+      - ./logs/:/app/logs/
+      - ./:/app/
+    environment:
+      - TZ=UTC
+    restart: always
