@@ -13,10 +13,13 @@ SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
 trading_clinet = TradingClient(API_KEY, SECRET_KEY, paper=True)
 
 def get_account():
-    return trading_clinet.get_account().buying_power
+    return trading_clinet.get_account().portfolio_value
 
 def get_orders():
     return trading_clinet.get_orders()
+
+def get_open_positions(symbol: str):
+    return trading_clinet.get_open_position(symbol)
 
 def get_positions():
     return trading_clinet.get_all_positions()
