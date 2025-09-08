@@ -31,7 +31,6 @@ def make_market_order(symbol, qty, side):
             qty=qty,
             side=side,
             time_in_force=TimeInForce.DAY,
-
         )
         market_order = trading_clinet.submit_order(order_data)
         print(market_order)
@@ -48,7 +47,6 @@ def make_stop_order(symbol, qty, side, stop_price):
             time_in_force=TimeInForce.DAY,
             stop_price=stop_price,
         )
-
         stop_order = trading_clinet.submit_order(order_data)
     except Exception as e:
         print(f"Error processing trade: {str(e)}")

@@ -11,7 +11,7 @@ load_dotenv()
 API_KEY = os.getenv("ALPACA_API_KEY")
 SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
 
-STOCKS_URL = "https://data.alpaca.markets/v1beta1/screener/stocks/movers?top=15"
+STOCKS_URL = "https://data.alpaca.markets/v1beta1/screener/stocks/movers?top=50"
 
 CRYPTO_URL = "https://data.alpaca.markets/v1beta1/screener/crypto/movers?top=50"
 
