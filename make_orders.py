@@ -1,5 +1,5 @@
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest, StopLossRequest
+from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest, StopLossRequest, TakeProfitRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 from dotenv import load_dotenv
 import os
@@ -31,6 +31,7 @@ def make_market_order(symbol, qty, side):
             qty=qty,
             side=side,
             time_in_force=TimeInForce.DAY,
+
         )
         market_order = trading_clinet.submit_order(order_data)
         print(market_order)
@@ -38,17 +39,34 @@ def make_market_order(symbol, qty, side):
     except Exception as e:
         print(f"Error processing trade: {str(e)}")
 
-def make_limit_order(symbol, qty, side, limit_price):
-    order_data = LimitOrderRequest(
-        symbol=symbol,
-        qty=qty,
-        side=side,
-        time_in_force=TimeInForce.DAY,
-        limit_price=limit_price,
-    )
+def make_stop_order(symbol, qty, side, stop_price):
+    try:
+        order_data = StopLossRequest(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            time_in_force=TimeInForce.DAY,
+            stop_price=stop_price,
+        )
 
-    limit_order = trading_clinet.submit_order(order_data)
-    print(limit_order)
+        stop_order = trading_clinet.submit_order(order_data)
+    except Exception as e:
+        print(f"Error processing trade: {str(e)}")
+        print(stop_order)
+
+def make_take_order(symbol, qty, side, take_price):
+    try:
+        order_data = TakeProfitRequest(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            time_in_force=TimeInForce.DAY,
+            take_price=take_price,
+        )
+        take_order = trading_clinet.submit_order(order_data)
+    except Exception as e:
+        print(f"Error processing trade: {str(e)}")
+        print(take_order)
 
 if __name__ == "__main__":
     print(get_account())

@@ -1,4 +1,5 @@
 import requests
+from alpaca.data.requests import ScreenerRequest, NewsRequest
 import os
 from dotenv import load_dotenv
 import json
@@ -12,7 +13,7 @@ SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
 
 STOCKS_URL = "https://data.alpaca.markets/v1beta1/screener/stocks/movers?top=15"
 
-CRYPTO_URL = "https://data.alpaca.markets/v1beta1/screener/crypto/movers?top=15"
+CRYPTO_URL = "https://data.alpaca.markets/v1beta1/screener/crypto/movers?top=50"
 
 HEADERS = {
     "accept": "application/json",
@@ -51,13 +52,13 @@ def get_top_crypto_gainers():
     for gainer in gainers:
         print(f"Symbol: {gainer['symbol']:<10} Change: {gainer['percent_change']:>.2f}%  Price: ${gainer['price']:.2f}")
 
-    # print("\nTop Losers:")
-    # print("----------")
-    # for loser in losers:
-    #     print(f"Symbol: {loser['symbol']:<10} Change: {loser['percent_change']:>6.2f}%  Price: ${loser['price']:.2f}")
+    print("\nTop Losers:")
+    print("----------")
+    for loser in losers:
+        print(f"Symbol: {loser['symbol']:<10} Change: {loser['percent_change']:>6.2f}%  Price: ${loser['price']:.2f}")
 
-    return gainers
+    return gainers, losers
 
 if __name__ == "__main__":
-    get_top_crypto_gainers()
+    # get_top_crypto_gainers()
     get_top_stocks_gainers()
