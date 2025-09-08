@@ -70,10 +70,10 @@ async def handle_stock_trade(data):
             shares = int(cash_per_trade / data.close)
             if shares > 0:
                 make_market_order(data.symbol, shares, OrderSide.BUY)
-                make_stop_order(data.symbol, shares, OrderSide.SELL, data.close*0.98)
-                make_take_order(data.symbol, shares, OrderSide.SELL, data.close*1.02)
+                # make_stop_order(data.symbol, shares, OrderSide.SELL, data.close*0.98)
+                # make_take_order(data.symbol, shares, OrderSide.SELL, data.close*1.02)
 
-        elif has_position and (data.close > current_smma*1.02 or data.close < data.vwap):
+        elif has_position and (data.close > current_smma*1.02 or data.close <= data.vwap*1):
             # Sell condition - only if we have a long position
             print(f"Sell signal: Price {data.close:.2f} vs SMMA20 {current_smma:.2f} for {data.symbol}")
             make_market_order(data.symbol, int(qty), OrderSide.SELL)
