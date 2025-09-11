@@ -1,15 +1,7 @@
 import requests
 from alpaca.data.requests import ScreenerRequest, NewsRequest
-import os
-from dotenv import load_dotenv
 import json
-
-# Load environment variables
-load_dotenv()
-
-# Get API credentials from environment variables
-API_KEY = os.getenv("ALPACA_API_KEY")
-SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
+from parameters import API_KEY, SECRET_KEY
 
 STOCKS_URL = "https://data.alpaca.markets/v1beta1/screener/stocks/movers?top=50"
 
