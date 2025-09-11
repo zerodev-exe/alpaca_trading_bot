@@ -10,13 +10,7 @@ from datetime import datetime, timedelta
 from alpaca.data.timeframe import TimeFrame
 import pandas as pd
 import numpy as np
-
-# Load environment variables
-load_dotenv()
-
-# Get API credentials from environment variables
-API_KEY = os.getenv("ALPACA_API_KEY")
-SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
+from parameters import API_KEY, SECRET_KEY
 
 stock_stream = StockDataStream(API_KEY, SECRET_KEY)
 crypto_stream = CryptoDataStream(API_KEY, SECRET_KEY)
@@ -24,6 +18,9 @@ data_client_stock = StockHistoricalDataClient(API_KEY, SECRET_KEY)
 data_client_crypto = CryptoHistoricalDataClient(API_KEY, SECRET_KEY)
 
 cash_per_trade: float = float(get_account()) / 10
+
+# Dictionary to store purchase prices
+purchase_prices = {}
 
 def check_position(symbol):
     """Check if we have an existing position and return position details"""
@@ -39,18 +36,17 @@ def check_position(symbol):
 
 async def handle_stock_trade(data):
     try:
-        print(f"Close price: {data.symbol}, {data.close:.2f}, {data.vwap:.2f}")
-
         # Check existing position
         has_position, qty, side = check_position(data.symbol)
 
         # Get historical bars
         request_params = StockBarsRequest(
             symbol_or_symbols=data.symbol,
-            start=datetime.now() - timedelta(days=1),
+            start=datetime.now() - timedelta(minutes=25),
             timeframe=TimeFrame.Minute
         )
 
+        # Transforming bars into a dataframe
         bars = data_client_stock.get_stock_bars(request_params)
         df = bars.df
 
@@ -61,22 +57,28 @@ async def handle_stock_trade(data):
 
         smma20 = ta.trend.sma_indicator(df['close'], window=20, fillna=True)
         current_smma = smma20.iloc[-1]
-        print(f"SMA20: {current_smma:.2f}")
 
+        print(f"{data.symbol} : {data.close} < {current_smma*0.95} and {data.close} >= {data.vwap}")
         # Trading logic
-        if not has_position and (data.close < current_smma*0.95 and data.close > data.vwap):
+        if not has_position and (data.close < current_smma*0.95 ): # and data.close >= data.vwap
             # Buy condition - only if we don't have a position
-            print(f"Buy signal: Price {data.close:.2f} is under SMMA20 {current_smma:.2f} for {data.symbol}")
+            print(f"BOT : {data.symbol} {data.close:.2f}")
             shares = int(cash_per_trade / data.close)
             if shares > 0:
                 make_market_order(data.symbol, shares, OrderSide.BUY)
-                # make_stop_order(data.symbol, shares, OrderSide.SELL, data.close*0.98)
-                # make_take_order(data.symbol, shares, OrderSide.SELL, data.close*1.02)
+                # Store the purchase price
+                purchase_prices[data.symbol] = data.close
+                print(f"Stored purchase price for {data.symbol}: {data.close:.2f}")
 
-        elif has_position and (data.close > current_smma*1.02 or data.close <= data.vwap*1):
-            # Sell condition - only if we have a long position
-            print(f"Sell signal: Price {data.close:.2f} vs SMMA20 {current_smma:.2f} for {data.symbol}")
-            make_market_order(data.symbol, int(qty), OrderSide.SELL)
+        elif has_position and data.symbol in purchase_prices:
+            purchase_price = purchase_prices[data.symbol]
+            # Sell only if current price is above purchase price and meets other conditions
+            if (data.close > purchase_price and 
+                (data.close > current_smma*1.02 or data.close <= data.vwap*1.05)):
+                print(f"SOLD : {data.symbol} {data.close:.2f} (Bought at: {purchase_price:.2f})")
+                make_market_order(data.symbol, int(qty), OrderSide.SELL)
+                # Remove the symbol from purchase_prices after selling
+                del purchase_prices[data.symbol]
 
     except Exception as e:
         print(f"Error processing trade data for {data.symbol}: {str(e)}")
