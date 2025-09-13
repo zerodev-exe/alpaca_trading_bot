@@ -39,6 +39,9 @@ async def handle_stock_trade(data):
         # Check existing position
         has_position, qty, side = check_position(data.symbol)
 
+        if data.close > 5.0:
+            return
+
         # Get historical bars
         request_params = StockBarsRequest(
             symbol_or_symbols=data.symbol,
@@ -62,21 +65,26 @@ async def handle_stock_trade(data):
         # Trading logic
         if not has_position and (data.close < current_smma*0.95 ): # and data.close >= data.vwap
             # Buy condition - only if we don't have a position
-            print(f"BOT : {data.symbol} {data.close:.2f}")
             shares = int(cash_per_trade / data.close)
             if shares > 0:
-                make_market_order(data.symbol, shares, OrderSide.BUY)
+                # Ensure stop loss is at least $0.01 below the current price
+                stop_loss = min(round(data.close*0.95, 2), data.close - 0.01)
+                take_profit = round(current_smma*1.02, 2)
+                take_profit = round(data.close*1.02, 2)
+                print(f"BOT : {data.symbol} {data.close:.2f} (Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f})")
+                make_market_order(data.symbol, shares, OrderSide.BUY, take_profit, stop_loss)
+
                 # Store the purchase price
                 purchase_prices[data.symbol] = data.close
-                print(f"Stored purchase price for {data.symbol}: {data.close:.2f}")
 
         elif has_position and data.symbol in purchase_prices:
             purchase_price = purchase_prices[data.symbol]
             # Sell only if current price is above purchase price and meets other conditions
             if (data.close > purchase_price and 
-                (data.close > current_smma*1.02 or data.close <= data.vwap*1.05)):
+                (data.close > current_smma*1.02 or data.close <= data.vwap*0.95)):
                 print(f"SOLD : {data.symbol} {data.close:.2f} (Bought at: {purchase_price:.2f})")
                 make_market_order(data.symbol, int(qty), OrderSide.SELL)
+                
                 # Remove the symbol from purchase_prices after selling
                 del purchase_prices[data.symbol]
 
