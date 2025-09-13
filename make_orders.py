@@ -7,7 +7,7 @@ from parameters import API_KEY, SECRET_KEY
 trading_clinet = TradingClient(API_KEY, SECRET_KEY, paper=True)
 
 def get_account():
-    return trading_clinet.get_account().portfolio_value
+    return trading_clinet.get_account().buying_power
 
 def get_orders():
     return trading_clinet.get_orders()
