@@ -27,17 +27,17 @@ def check_position(symbol):
     try:
         position = get_open_positions(symbol)
         if position is not None and float(position.qty) > 0:
-            return True, float(position.qty), position.side
-        return False, 0, None
+            return True, float(position.qty)
+        return False, 0
     except Exception as e:
         if "position does not exist" in str(e):
-            return False, 0, None
+            return False, 0
         raise e
 
 async def handle_stock_trade(data):
     try:
         # Check existing position
-        has_position, qty, side = check_position(data.symbol)
+        has_position, qty = check_position(data.symbol)
 
         if data.close > 5.0:
             return
@@ -50,8 +50,7 @@ async def handle_stock_trade(data):
         )
 
         # Transforming bars into a dataframe
-        bars = data_client_stock.get_stock_bars(request_params)
-        df = bars.df
+        df = data_client_stock.get_stock_bars(request_params).df
 
         # Calculate SMA
         if len(df) < 20:
