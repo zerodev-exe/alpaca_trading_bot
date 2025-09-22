@@ -46,13 +46,9 @@ def check_position(symbol):
 
 async def handle_stock_trade(data):
     try:
-        # Check existing position
-        has_position, qty = check_position(data.symbol)
-
         # Filter out stocks that are higher than $5
-        if data.close > 5.0:
+        if data.close > 5.0 and data.close < 1.0:
             return
-
 
         # Get historical bars
         request_params = StockBarsRequest(
@@ -70,23 +66,27 @@ async def handle_stock_trade(data):
             return
 
         smma20 = ta.trend.sma_indicator(df['close'], window=20, fillna=True)
-        # rsi = ta.momentum.rsi_indicator(df, window=14, fillna=True)
-        # print(rsi)
-        current_smma = smma20.iloc[-1]
+        rsi =  ta.momentum.RSIIndicator(df['close'], window=14, fillna=True).rsi()
 
-        print(f"{data.symbol} : {data.close} < {current_smma*0.95:.2f} and {data.close} >= {data.vwap}")
+        current_smma = smma20.iloc[-1]
+        current_rsi = rsi.iloc[-1]
+
+        # Check existing position
+        has_position, qty = check_position(data.symbol)
+
+        # print(f"{data.symbol} : {data.close} < {current_smma*0.95:.2f} and {data.close} >= {data.vwap}")
         # Trading logic
-        if not has_position and (data.close < current_smma*0.95 ): # and data.close >= data.vwap
+        if not has_position and (data.close < current_smma*0.95 or current_rsi < 30) and data.close >= data.vwap:
             # Buy condition - only if we don't have a position
             shares = int(cash_per_trade / data.close)
             if shares > 0:
                 # Ensure stop loss is at least $0.01 below the current price
-                stop_loss = min(round(data.close*0.95, 2), data.close - 0.02)
-                take_profit = round(current_smma*1.02, 2)
+                stop_loss = round(min(data.close*0.95, data.close - 0.02), 2)
+                take_profit = round(max(data.close*1.02,data.close + 0.02), 2)
                 # take_profit = round(data.close*1.02, 2)
                 print(f"BOT : {data.symbol} {data.close:.2f} (Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f})")
-                make_market_order(data.symbol, shares, OrderSide.BUY, take_profit, stop_loss)
-
+                order = make_market_order(data.symbol, shares, OrderSide.BUY, take_profit, stop_loss)
+                print(order["current_price"])
                 # Store the purchase price
                 purchase_prices[data.symbol] = data.close
 
@@ -122,4 +122,3 @@ if __name__ == "__main__":
             print("Waiting for next bar...")
     except Exception as e:
         print(f"Error in main: {str(e)}")
-
