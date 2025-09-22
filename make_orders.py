@@ -18,7 +18,6 @@ def get_positions():
     return trading_clinet.get_all_positions()
 
 def make_market_order(symbol: str, qty: int, side, take_profit: float, stop_loss: float):
-    print(f"Take Profit: {take_profit:.2f}\nStop Loss: {stop_loss:.2f}")
     try:
         bracket__order_data = MarketOrderRequest(
                     symbol=symbol,
@@ -31,12 +30,12 @@ def make_market_order(symbol: str, qty: int, side, take_profit: float, stop_loss
                     )
 
         market_order = trading_clinet.submit_order(bracket__order_data)
+        print(f"Take Profit: {take_profit:.2f}\nStop Loss: {stop_loss:.2f}")
         return market_order
     except Exception as e:
         print(f"Error processing trade: {str(e)}")
 
 def make_sell_order(symbol: str, qty: int, side):
-    print(f"Placing market order for {qty} shares of {symbol} as a {side} order.")
     try:
         bracket__order_data = MarketOrderRequest(
                     symbol=symbol,
@@ -47,6 +46,7 @@ def make_sell_order(symbol: str, qty: int, side):
                     )
 
         market_order = trading_clinet.submit_order(bracket__order_data)
+        print(f"Placing sell order for {qty} shares of {symbol} as a {side} order.")
         return market_order
     except Exception as e:
         print(f"Error processing trade: {str(e)}")
