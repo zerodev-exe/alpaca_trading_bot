@@ -114,7 +114,7 @@ if __name__ == "__main__":
         for gainer in gainers:
             print(f"Subscribing to {gainer['symbol']}")
             stock_stream.subscribe_bars(handle_stock_trade, gainer['symbol'])
-            stock_stream.run()
+        stock_stream.run()
         while True:
             print("Waiting for next bar...")
     except Exception as e:
