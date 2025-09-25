@@ -30,7 +30,7 @@ def get_top_stocks_gainers():
     # for loser in losers:
     #     print(f"Symbol: {loser['symbol']:<10} Change: {loser['percent_change']:>6.2f}%  Price: ${loser['price']:.2f}")
 
-    return gainers
+    return gainers, losers
 
 def get_top_crypto_gainers():
     response = requests.get(CRYPTO_URL, headers=HEADERS)
