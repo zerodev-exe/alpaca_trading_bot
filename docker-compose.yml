@@ -1,11 +1,26 @@
 version: "3.4"
 
 services:
-  trading-bot:
-    build: .
-    container_name: alpaca-trading-bot
+  alpaca-stock-trading-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.stock
+    container_name: alpaca-trading-bot-stock
     volumes:
-      - ./.env:/app/.env
+      - ./.env:/app/.env:ro
+      - ./logs/:/app/logs/
+      - ./:/app/
+    environment:
+      - TZ=UTC
+    restart: always
+
+  alpaca-crypto-trading-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.crypto
+    container_name: alpaca-trading-bot-crypto
+    volumes:
+      - ./.env:/app/.env:ro
       - ./logs/:/app/logs/
       - ./:/app/
     environment:

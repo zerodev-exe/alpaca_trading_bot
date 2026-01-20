@@ -35,7 +35,7 @@ async def handle_stock_trade(data):
         # Filter out stocks that are above $5 or below $1
         if data.close > 5.0 or data.close < 1.0:
             return
-        
+
         if not data.symbol.endswith('/USD'):
             return
 

@@ -1,0 +1,12 @@
+[project]
+name = "alpaca-trading-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alpaca-py>=0.43.2",
+    "python-dotenv>=1.2.1",
+    "pytz>=2025.2",
+    "ta>=0.11.0",
+]
