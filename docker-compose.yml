@@ -6,8 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile.stock
     container_name: alpaca-trading-bot-stock
-    volumes:
-      - ./:/app/
     environment:
       - TZ=UTC
     restart: always
@@ -17,8 +15,6 @@ services:
       context: .
       dockerfile: Dockerfile.crypto
     container_name: alpaca-trading-bot-crypto
-    volumes:
-      - ./:/app/
     environment:
       - TZ=UTC
     restart: always
