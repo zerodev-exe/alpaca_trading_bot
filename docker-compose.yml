@@ -7,8 +7,6 @@ services:
       dockerfile: Dockerfile.stock
     container_name: alpaca-trading-bot-stock
     volumes:
-      - ./.env:/app/.env:ro
-      - ./logs/:/app/logs/
       - ./:/app/
     environment:
       - TZ=UTC
@@ -20,8 +18,6 @@ services:
       dockerfile: Dockerfile.crypto
     container_name: alpaca-trading-bot-crypto
     volumes:
-      - ./.env:/app/.env:ro
-      - ./logs/:/app/logs/
       - ./:/app/
     environment:
       - TZ=UTC
