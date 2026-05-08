@@ -13,10 +13,13 @@ import pytz
 crypto_stream = CryptoDataStream(API_KEY, SECRET_KEY)
 data_client_crypto = CryptoHistoricalDataClient(API_KEY, SECRET_KEY)
 
-cash_per_trade: float = float(get_account_balance()) / 10 # Allocate 10% of account balance per trade
+cash_per_trade: float = (
+    float(get_account_balance()) / 10
+)  # Allocate 10% of account balance per trade
 
 # Dictionary to store purchase prices
 purchase_prices = {}
+
 
 def check_position(symbol):
     """Check if we have an existing position and return position details"""
@@ -30,20 +33,21 @@ def check_position(symbol):
             return False, 0
         raise e
 
+
 async def handle_stock_trade(data):
     try:
         # Filter out stocks that are above $5 or below $1
         if data.close > 5.0 or data.close < 1.0:
             return
 
-        if not data.symbol.endswith('/USD'):
+        if not data.symbol.endswith("/USD"):
             return
 
         # Get historical bars
         request_params = CryptoBarsRequest(
             symbol_or_symbols=data.symbol,
             start=datetime.now() - timedelta(minutes=60),
-            timeframe=TimeFrame.Minute
+            timeframe=TimeFrame.Minute,
         )
 
         # Transforming bars into a dataframe
@@ -54,8 +58,8 @@ async def handle_stock_trade(data):
             print(f"Not enough data points for {data.symbol}")
             return
 
-        smma20 = ta.trend.sma_indicator(df['close'], window=20, fillna=True)
-        rsi =  ta.momentum.RSIIndicator(df['close'], window=14, fillna=True).rsi()
+        smma20 = ta.trend.sma_indicator(df["close"], window=20, fillna=True)
+        rsi = ta.momentum.RSIIndicator(df["close"], window=14, fillna=True).rsi()
 
         current_smma = smma20.iloc[-1]
         current_rsi = rsi.iloc[-1]
@@ -63,18 +67,29 @@ async def handle_stock_trade(data):
         # Check existing position
         # has_position, qty = check_position(data.symbol)
 
-        print(f"{data.symbol} : ({data.close} < {current_smma*0.95:.2f} or {current_rsi:.2f} < 30) and {data.close} >= {data.vwap:.2f} : ({data.close < current_smma*0.95} or {current_rsi < 30}) and {data.close >= data.vwap}")
+        print(
+            f"{data.symbol} : ({data.close} < {current_smma * 0.95:.2f} or {current_rsi:.2f} < 30) and {data.close} >= {data.vwap:.2f} : ({data.close < current_smma * 0.95} or {current_rsi < 30}) and {data.close >= data.vwap}"
+        )
         # Trading logic
-        if (data.close < current_smma*0.95 or current_rsi < 30) and data.close >= data.vwap:
+        if (
+            data.close < current_smma * 0.95 or current_rsi < 30
+        ):
             # Buy condition - only if we don't have a position
             shares = int(cash_per_trade / data.close)
             if shares > 0:
                 # Ensure stop loss is at least $0.01 below the current price
-                stop_loss = round(min(data.close*0.95, data.close - 0.01), 2)
-                take_profit = round(max(data.close*1.02,data.close + 0.01), 2)
+                stop_loss = round(min(data.close * 0.95, data.close - 0.01), 2)
+                take_profit = round(max(data.close * 1.02, data.close + 0.01), 2)
                 # take_profit = round(data.close*1.02, 2)
-                print(f"BOT : {data.symbol} {data.close:.2f} (Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f})")
-                order = make_market_order(data.symbol, shares, OrderSide.BUY, take_profit, stop_loss)
+                print(
+                    f"BOT : {data.symbol} {data.close:.2f} (Stop Loss: {stop_loss:.2f}, Take Profit: {take_profit:.2f})"
+                )
+                order = buy_order_trailing_stop(
+                    data.symbol,
+                    shares,
+                    OrderSide.BUY,
+                    trail_percent=0.1,  # 5% trailing stop
+                    )
                 print(order)
                 # Store the purchase price
                 purchase_prices[data.symbol] = data.close
@@ -82,31 +97,27 @@ async def handle_stock_trade(data):
         # elif has_position and data.symbol in purchase_prices:
         #     purchase_price = purchase_prices[data.symbol]
         #     # Sell only if current price is above purchase price and meets other conditions
-        #     if (data.close > purchase_price and 
+        #     if (data.close > purchase_price and
         #         (data.close > current_smma*1.02 or data.close <= data.vwap*0.95)):
         #         print(f"SOLD : {data.symbol} {data.close:.2f} (Bought at: {purchase_price:.2f})")
         #         make_sell_order(data.symbol, int(qty), OrderSide.SELL)
         #         # Remove the symbol from purchase_prices after selling
         #         del purchase_prices[data.symbol]
 
-        # Check if it's within 30 seconds of 3:59 PM
-        if data.timestamp.astimezone(pytz.timezone('US/Eastern')).hour == 15:
-            print("It's very close to 3:59 PM!")
-            close_all_positions()
-            crypto_stream.stop()
 
     except Exception as e:
         print(f"Error processing trade data for {data.symbol}: {str(e)}")
 
+
 if __name__ == "__main__":
     try:
-        gainers, losers = get_top_gainers.get_top_crypto_gainers()
-        for gainer in gainers:
-            crypto_stream.subscribe_bars(handle_stock_trade, gainer['symbol'])
-        for loser in losers:
-            crypto_stream.subscribe_bars(handle_stock_trade, loser['symbol'])
-        crypto_stream.run()
         while True:
             print("Waiting for next bar...")
+            gainers, losers = get_top_gainers.get_top_crypto_gainers()
+            for gainer in gainers:
+                crypto_stream.subscribe_bars(handle_stock_trade, gainer["symbol"])
+            for loser in losers:
+                crypto_stream.subscribe_bars(handle_stock_trade, loser["symbol"])
+            crypto_stream.run()
     except Exception as e:
         print(f"Error in main: {str(e)}")
